@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{presentation/Fragmentos :: head('Mis Puestos')}"></head>
+<body style="background-color:#080f15; min-height:100vh; display:flex; flex-direction:column;">
+<nav style="background-color:rgb(35,46,46);">
+    <ul class="nav nav-tabs w-100">
+        <li class="nav-item">
+            <a class="nav-link" th:href="@{/empresa/EmpresaDashboard}">
+                <i class="fa-solid fa-briefcase" style="color:rgb(10,202,154)"></i>
+            </a>
+        </li>
+        <li class="nav-item"><span class="nav-link fw-bold" style="color:rgb(10,202,154)">Bolsa de Empleo</span></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/empresa/EmpresaDashboard}" style="color:rgb(10,202,154)">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link active" th:href="@{/empresa/MisPuestos}" style="color:rgb(10,202,154)">Mis Puestos</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/empresa/PublicarPuesto}" style="color:rgb(10,202,154)">Publicar Puesto</a></li>
+        <li class="nav-item ms-auto">
+            <span class="nav-link" th:text="${empresa.nombre}" style="color:rgb(10,202,154)"></span>
+        </li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/empresa/salir}" style="color:rgb(10,202,154)">Salir</a></li>
+    </ul>
+</nav>
+<main class="flex-grow-1">
+    <div class="container-fluid px-3 mt-4">
+        <div class="d-flex align-items-center mb-3">
+            <h5 class="text-white">Mis Puestos</h5>
+            <a th:href="@{/empresa/PublicarPuesto}" class="btn ms-auto"
+               style="background-color:rgb(10,202,154); color:#080f15; font-weight:700;">
+                <i class="fa-solid fa-plus me-1"></i> Publicar Puesto
+            </a>
+        </div>
+        <div class="card" style="background-color:rgb(35,46,46); border-color:#4a5f5f;">
+            <div class="card-body">
+                <table class="table table-borderless mb-0" style="color:#cdd9d9; font-size:0.9rem; --bs-table-bg: transparent;">
+                    <thead>
+                    <tr style="border-bottom:1px solid #4a5f5f;">
+                        <th style="color:rgb(10,202,154)">ID</th>
+                        <th style="color:rgb(10,202,154)">Descripción</th>
+                        <th style="color:rgb(10,202,154)">Salario</th>
+                        <th style="color:rgb(10,202,154)">Tipo</th>
+                        <th style="color:rgb(10,202,154)">Activo</th>
+                        <th class="text-center" style="color:rgb(10,202,154)">Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody style="color:#cdd9d9;">
+                    <tr th:each="puesto : ${puestos}" style="border-bottom:1px solid #2e3e3e;">
+                        <td th:text="${puesto.id}" style="color:#cdd9d9;"></td>
+                        <td th:text="${puesto.descripcion}" style="color:#cdd9d9;"></td>
+                        <td th:text="'$' + ${puesto.salario}" style="color:#cdd9d9;"></td>
+                        <td th:text="${puesto.esPublico == 1 ? 'Público' : 'Privado'}" style="color:#cdd9d9;"></td>
+                        <td th:text="${puesto.activo == 1 ? 'Sí' : 'No'}" style="color:#cdd9d9;"></td>
+                        <td class="text-center">
+                            <a th:href="@{/empresa/BuscarCandidatos(puestoId=${puesto.id})}"
+                               class="btn btn-sm" style="background-color:#1c6e5a; color:white;">
+                                Buscar candidatos
+                            </a>
+                            <form th:action="@{/empresa/desactivarPuesto}" method="post"
+                                  style="display:inline;">
+                                <input type="hidden" name="puestoId" th:value="${puesto.id}">
+                                <button type="submit" class="btn btn-sm" style="background-color:#7a2f2f; color:white;" th:disabled="${puesto.activo == 0}">Desactivar</button>
+                            </form>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
+<footer th:replace="~{presentation/Fragmentos :: footer}"></footer>
+</body>
+</html>

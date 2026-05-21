@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{presentation/Fragmentos :: head('Mi CV')}"></head>
+    <body style="background-color:#080f15; min-height:100vh; display:flex; flex-direction:column;">
+        <nav style="background-color: rgb(35, 46, 46);">
+            <ul class="nav nav-tabs w-100">
+            <li class="nav-item">
+                <a class="nav-link" th:href="@{/oferente/MenuOferente}">
+                    <i class="fa-solid fa-briefcase" style="color:rgb(10, 202, 154)"></i>
+                </a>
+            </li>
+            <li class="nav-item">
+                <span class="nav-link fw-bold" style="color:rgb(10, 202, 154)">Bolsa de Empleo</span>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" aria-current="page" th:href="@{/oferente/MenuOferente}" style="color:rgb(10, 202, 154)">Dashboard</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" th:href="@{/oferente/MisHabilidades}" style="color:rgb(10, 202, 154)">Mis Habilidades</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" aria-current="page" th:href="@{/oferente/MiCV}" style="color:rgb(10, 202, 154)">Mi CV</a>
+            </li>
+            <li class="nav-item ms-auto">
+                <span class="nav-link" th:text="${oferente.nombre}+' '+${oferente.apellido}" style="color:rgb(10,202,154)"></span>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" th:href="@{/salir}" style="color:rgb(10, 202, 154)">Salir</a>
+            </li>
+            </ul>
+        </nav>
+        <main class="flex-grow-1 d-flex align-items-center justify-content-center" style="background-color:#080f15;">
+            <div style="width:550px;">
+                <div class="card" style="background-color:rgb(35,46,46); border-color:#4a5f5f;">
+                    <div class="card-body">
+                        <h5 class="text-center mb-4" style="color:rgb(10,202,154)">Mi CV</h5>
+                        <form th:action="@{/oferente/subirCV}" method="post" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label class="form-label" style="color:#8aa8a8;">Seleccionar CV (PDF)</label>
+                                <input class="form-control" type="file" name="cv" accept=".pdf"
+                                       style="background-color:#0e1a22; border:1px solid #4a5f5f; color:#cdd9d9;">
+                            </div>
+                            <button type="submit" class="btn w-100 mb-2"
+                                    style="background-color:rgb(10,202,154); color:#080f15; font-weight:700;">
+                                <i class="fa-solid fa-upload me-1"></i> Subir CV
+                            </button>
+                        </form>
+                        <a th:if="${oferente.cv!=null}" th:href="@{/oferente/revisarCV}" class="btn w-100"
+                           style="background-color:#2e3e3e; color:#cdd9d9; font-weight:700;">Revisar CV
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </main>
+        <footer th:replace="~{presentation/Fragmentos :: footer}"></footer>
+    </body>
+</html>

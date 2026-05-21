@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{presentation/Fragmentos :: head('Buscar Candidatos')}"></head>
+<body style="background-color:#080f15; min-height:100vh; display:flex; flex-direction:column;">
+<nav style="background-color:rgb(35,46,46);">
+    <ul class="nav nav-tabs w-100">
+        <li class="nav-item">
+            <a class="nav-link" th:href="@{/empresa/EmpresaDashboard}">
+                <i class="fa-solid fa-briefcase" style="color:rgb(10,202,154)"></i>
+            </a>
+        </li>
+        <li class="nav-item"><span class="nav-link fw-bold" style="color:rgb(10,202,154)">Bolsa de Empleo</span></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/empresa/EmpresaDashboard}" style="color:rgb(10,202,154)">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/empresa/MisPuestos}" style="color:rgb(10,202,154)">Mis Puestos</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/empresa/PublicarPuesto}" style="color:rgb(10,202,154)">Publicar Puesto</a></li>
+        <li class="nav-item ms-auto">
+            <span class="nav-link" th:text="${empresa.nombre}" style="color:rgb(10,202,154)"></span>
+        </li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/empresa/salir}" style="color:rgb(10,202,154)">Salir</a></li>
+    </ul>
+</nav>
+<main class="flex-grow-1">
+    <div class="container-fluid px-3 mt-4">
+        <div class="d-flex align-items-center mb-3">
+            <div>
+                <h5 class="text-white mb-0">Candidatos para el puesto</h5>
+                <small style="color:#8aa8a8;" th:text="'Puesto: ' + ${puesto.descripcion}"></small>
+            </div>
+            <a th:href="@{/empresa/MisPuestos}" class="btn ms-auto"
+               style="background-color:#2e3e3e; color:white;">
+                <i class="fa-solid fa-arrow-left me-1"></i> Volver
+            </a>
+        </div>
+        <div class="card" style="background-color:rgb(35,46,46); border-color:#4a5f5f;">
+            <div class="card-body">
+                <div th:if="${#lists.isEmpty(candidatos)}">
+                    <p style="color:#8aa8a8;">No se encontraron candidatos con habilidades coincidentes.</p>
+                </div>
+                <table th:if="${!#lists.isEmpty(candidatos)}"
+                       class="table table-borderless mb-0" style="color:#cdd9d9; font-size:0.9rem; --bs-table-bg: transparent;">
+                    <thead>
+                    <tr style="border-bottom:1px solid #4a5f5f;">
+                        <th style="color:rgb(10,202,154)">Oferente</th>
+                        <th style="color:rgb(10,202,154)">Requisitos cumplidos</th>
+                        <th style="color:rgb(10,202,154)">% Similitud</th>
+                        <th class="text-center" style="color:rgb(10,202,154)">Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="candidato : ${candidatos}" style="border-bottom:1px solid #2e3e3e;">
+                        <td style="color:#cdd9d9;" th:text="${candidato['oferente'].nombre} + ' ' + ${candidato['oferente'].apellido}"></td>
+                        <td style="color:#cdd9d9;" th:text="${candidato['cumplidos']} + ' / ' + ${candidato['total']}"></td>
+                        <td style="color:#cdd9d9;" th:text="${candidato['similitud']} + '%'"></td>
+                        <td class="text-center">
+                            <a th:href="@{/empresa/DetalleOferente(oferenteId=${candidato['oferente'].usuario.id}, puestoId=${puesto.id})}" class="btn btn-sm" style="background-color:#1c6e5a; color:white;">
+                                Ver detalle
+                            </a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
+<footer th:replace="~{presentation/Fragmentos :: footer}"></footer>
+</body>
+</html>

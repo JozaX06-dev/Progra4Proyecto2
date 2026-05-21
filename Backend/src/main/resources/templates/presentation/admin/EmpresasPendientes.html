@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{presentation/Fragmentos :: head('Empresas Pendientes')}"></head>
+<body style="background-color:#080f15; min-height:100vh; display:flex; flex-direction:column;">
+<nav style="background-color:rgb(35,46,46);">
+  <ul class="nav nav-tabs w-100">
+    <li class="nav-item">
+      <a class="nav-link" th:href="@{/admin/AdminDashboard}">
+        <i class="fa-solid fa-briefcase" style="color:rgb(10,202,154)"></i>
+      </a>
+    </li>
+    <li class="nav-item"><span class="nav-link fw-bold" style="color:rgb(10,202,154)">Bolsa de Empleo</span></li>
+    <li class="nav-item"><a class="nav-link" th:href="@{/admin/AdminDashboard}" style="color:rgb(10,202,154)">Dashboard</a></li>
+    <li class="nav-item"><a class="nav-link active" th:href="@{/admin/EmpresasPendientes}" style="color:rgb(10,202,154)">Empresas Pendientes</a></li>
+    <li class="nav-item"><a class="nav-link" th:href="@{/admin/OferentesPendientes}" style="color:rgb(10,202,154)">Oferentes Pendientes</a></li>
+    <li class="nav-item"><a class="nav-link" th:href="@{/admin/Caracteristicas}" style="color:rgb(10,202,154)">Características</a></li>
+    <li class="nav-item"><a class="nav-link" th:href="@{/admin/Reportes}" style="color:rgb(10,202,154)">Reportes</a></li>
+    <li class="nav-item ms-auto">
+      <span class="nav-link" th:text="${admin.usuario.correo}" style="color:rgb(10,202,154)"></span>
+    </li>
+    <li class="nav-item"><a class="nav-link" th:href="@{/admin/salir}" style="color:rgb(10,202,154)">Salir</a></li>
+  </ul>
+</nav>
+<main class="flex-grow-1">
+    <div class="container-fluid px-3 mt-4">
+        <h5 class="text-white mb-3">Empresas Pendientes</h5>
+        <div class="card" style="background-color:rgb(35,46,46); border-color:#4a5f5f;">
+            <div class="card-body">
+                <div th:if="${#lists.isEmpty(empresas)}">
+                    <p style="color:#8aa8a8;">No hay empresas pendientes de aprobación.</p>
+                </div>
+                <div th:if="${claveGenerada != null}"
+                     class="alert d-flex align-items-center justify-content-between mb-3"
+                     style="background-color:rgba(10,202,154,0.15); border:1px solid rgb(10,202,154); color:#cdd9d9;">
+                    <div>
+                        <i class="fa-solid fa-key me-2" style="color:rgb(10,202,154)"></i>
+                        <strong th:text="${tipoAprobado}"></strong> aprobado/a.
+                        Contraseña generada:
+                        <code style="background-color:#0e1a22; padding:2px 8px; border-radius:4px;
+                     color:rgb(10,202,154); font-size:1rem; letter-spacing:1px;"
+                              th:text="${claveGenerada}">
+                        </code>
+                    </div>
+                    <small style="color:#8aa8a8;">Copiá esta clave antes de salir, no se volverá a mostrar.</small>
+                </div>
+                <table th:if="${!#lists.isEmpty(empresas)}"
+                       class="table table-borderless" style="color:#cdd9d9; font-size:0.9rem; --bs-table-bg: transparent;">
+                    <thead>
+                    <tr style="border-bottom:1px solid #4a5f5f;">
+                        <th style="color:rgb(10,202,154)">Nombre</th>
+                        <th style="color:rgb(10,202,154)">Correo</th>
+                        <th style="color:rgb(10,202,154)">Teléfono</th>
+                        <th style="color:rgb(10,202,154)">Localización</th>
+                        <th class="text-center" style="color:rgb(10,202,154)">Acción</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="empresa : ${empresas}" style="border-bottom:1px solid #2e3e3e;">
+                        <td style="color:#cdd9d9;" th:text="${empresa.nombre}"></td>
+                        <td style="color:#cdd9d9;" th:text="${empresa.usuario.correo}"></td>
+                        <td style="color:#cdd9d9;" th:text="${empresa.telefono}"></td>
+                        <td style="color:#cdd9d9;" th:text="${empresa.localizacion}"></td>
+                        <td class="text-center">
+                            <form th:action="@{/admin/aprobarEmpresa}" method="post" style="display:inline;">
+                                <input type="hidden" name="usuarioId" th:value="${empresa.usuario.id}">
+                                <button type="submit" class="btn btn-sm" style="background-color:rgb(10,202,154); color:#080f15; font-weight:700;">Aprobar
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
+<footer th:replace="~{presentation/Fragmentos :: footer}"></footer>
+</body>
+</html>

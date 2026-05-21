@@ -1,0 +1,113 @@
+package una.backend.presentation.admin;
+
+import jakarta.servlet.http.HttpSession;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import una.backend.logic.*;
+
+import java.util.List;
+
+@org.springframework.stereotype.Controller("admin")
+public class AdminController {
+    @Autowired
+    private Service service;
+    @Autowired
+    private HttpSession session;
+
+    @GetMapping("/admin/AdminDashboard")
+    public String dasboard(Model model) {
+        Usuario usuario = (Usuario) session.getAttribute("usuario");
+        Administrador admin = service.adminFindById(usuario.getId());
+        model.addAttribute("admin", admin);
+        return "presentation/admin/AdminDashboard";
+    }
+    @GetMapping("/admin/EmpresasPendientes")
+    public String empresasPendientes(Model model) {
+        Usuario usuario = (Usuario) session.getAttribute("usuario");
+        Administrador admin = service.adminFindById(usuario.getId());
+        model.addAttribute("admin", admin);
+        model.addAttribute("empresas", service.empresasPendientes());
+        return "presentation/admin/EmpresasPendientes";
+    }
+    @PostMapping("/admin/aprobarEmpresa")
+    public String aprobarEmpresa(@RequestParam Integer usuarioId, RedirectAttributes ra) {
+        String clave = service.aprobarEmpresa(usuarioId);
+        ra.addFlashAttribute("claveGenerada", clave);
+        ra.addFlashAttribute("tipoAprobado", "Empresa");
+        return "redirect:/admin/EmpresasPendientes";
+    }
+    @GetMapping("/admin/OferentesPendientes")
+    public String oferentesPendientes(Model model) {
+        Usuario usuario = (Usuario) session.getAttribute("usuario");
+        Administrador admin = service.adminFindById(usuario.getId());
+        model.addAttribute("admin", admin);
+        model.addAttribute("oferentes", service.oferentesPendientes());
+        return "presentation/admin/OferentesPendientes";
+    }
+    @PostMapping("/admin/aprobarOferente")
+    public String aprobarOferente(@RequestParam Integer usuarioId, RedirectAttributes ra) {
+        String clave = service.aprobarOferente(usuarioId);
+        ra.addFlashAttribute("claveGenerada", clave);
+        ra.addFlashAttribute("tipoAprobado", "Oferente");
+        return "redirect:/admin/OferentesPendientes";
+    }
+    @GetMapping("/admin/Caracteristicas")
+    public String caracteristicas(Model model) {
+        Usuario usuario = (Usuario) session.getAttribute("usuario");
+        Administrador admin = service.adminFindById(usuario.getId());
+        List<Caracteristica> raices = service.caracteristicasRaiz();
+        model.addAttribute("admin", admin);
+        model.addAttribute("caracteristicas", raices);
+        model.addAttribute("tieneHijos", service.mapTieneHijos(raices));
+        model.addAttribute("todasCaracteristicas", service.caracteristicasRaiz());
+        return "presentation/admin/Caracteristicas";
+    }
+    @GetMapping("/admin/Caracteristicas/hijos/{id}")
+    public String caracteristicasHijos(@PathVariable Integer id, Model model) {
+        Usuario usuario = (Usuario) session.getAttribute("usuario");
+        Administrador admin = service.adminFindById(usuario.getId());
+        Caracteristica padre = service.caracteristicaFindById(id);
+        List<Caracteristica> hijos = service.caracteristicasHijos(padre);
+        model.addAttribute("admin", admin);
+        model.addAttribute("caracteristicas", hijos);
+        model.addAttribute("tieneHijos", service.mapTieneHijos(hijos));
+        model.addAttribute("padre", padre);
+        model.addAttribute("todasCaracteristicas", service.caracteristicasRaiz());
+        return "presentation/admin/Caracteristicas";
+    }
+    @PostMapping("/admin/crearCaracteristica")
+    public String crearCaracteristica(@RequestParam String nombre, @RequestParam(required = false) Integer padreId) {
+        service.crearCaracteristica(nombre, padreId);
+        return "redirect:/admin/Caracteristicas";
+    }
+    @GetMapping("/admin/Reportes")
+    public String reportes(@RequestParam(required = false) Integer anio, Model model) {
+        Usuario usuario = (Usuario) session.getAttribute("usuario");
+        Administrador admin = service.adminFindById(usuario.getId());
+        int anioActual = java.time.Year.now().getValue();
+        model.addAttribute("admin", admin);
+        model.addAttribute("anioActual", anioActual);
+        model.addAttribute("anioAnterior", anioActual - 1);
+        model.addAttribute("anioAnteAnterior", anioActual - 2);
+        if (anio != null) {
+            model.addAttribute("anioSeleccionado", anio);
+            model.addAttribute("porMes", service.puestosPorMes(anio));
+        }
+        return "presentation/admin/Reportes";
+    }
+    @GetMapping("/admin/generarReporte")
+    public void generarReporte(@RequestParam Integer anio, jakarta.servlet.http.HttpServletResponse response) throws Exception {
+        byte[] pdf = service.generarReportePDF(anio);
+        response.setContentType("application/pdf");
+        response.setHeader("Content-Disposition", "inline; filename=reporte_" + anio + ".pdf");
+        response.getOutputStream().write(pdf);
+        response.getOutputStream().flush();
+    }
+    @GetMapping("/admin/salir")
+    public String salir() {
+        session.invalidate();
+        return "redirect:/";
+    }
+}
