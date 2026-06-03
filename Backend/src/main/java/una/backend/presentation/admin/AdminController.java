@@ -1,113 +1,101 @@
 package una.backend.presentation.admin;
 
-import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.ui.Model;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import una.backend.logic.*;
 
-import java.util.List;
+import java.util.Map;
 
-@org.springframework.stereotype.Controller("admin")
+@RestController
+@RequestMapping("/api/admin")
 public class AdminController {
+
     @Autowired
     private Service service;
-    @Autowired
-    private HttpSession session;
 
-    @GetMapping("/admin/AdminDashboard")
-    public String dasboard(Model model) {
-        Usuario usuario = (Usuario) session.getAttribute("usuario");
-        Administrador admin = service.adminFindById(usuario.getId());
-        model.addAttribute("admin", admin);
-        return "presentation/admin/AdminDashboard";
+    // ── DASHBOARD ──────────────────────────────────────────
+    @GetMapping("/dashboard")
+    public ResponseEntity<?> dashboard() {
+        Administrador admin = service.getAdminActual();
+        return ResponseEntity.ok(admin);
     }
-    @GetMapping("/admin/EmpresasPendientes")
-    public String empresasPendientes(Model model) {
-        Usuario usuario = (Usuario) session.getAttribute("usuario");
-        Administrador admin = service.adminFindById(usuario.getId());
-        model.addAttribute("admin", admin);
-        model.addAttribute("empresas", service.empresasPendientes());
-        return "presentation/admin/EmpresasPendientes";
+
+    // ── EMPRESAS PENDIENTES ────────────────────────────────
+    @GetMapping("/empresasPendientes")
+    public ResponseEntity<?> empresasPendientes() {
+        return ResponseEntity.ok(service.empresasPendientes());
     }
-    @PostMapping("/admin/aprobarEmpresa")
-    public String aprobarEmpresa(@RequestParam Integer usuarioId, RedirectAttributes ra) {
+
+    @PostMapping("/aprobarEmpresa/{usuarioId}")
+    public ResponseEntity<?> aprobarEmpresa(@PathVariable Integer usuarioId) {
         String clave = service.aprobarEmpresa(usuarioId);
-        ra.addFlashAttribute("claveGenerada", clave);
-        ra.addFlashAttribute("tipoAprobado", "Empresa");
-        return "redirect:/admin/EmpresasPendientes";
+        return ResponseEntity.ok(Map.of(
+                "clave", clave,
+                "mensaje", "Empresa aprobada"
+        ));
     }
-    @GetMapping("/admin/OferentesPendientes")
-    public String oferentesPendientes(Model model) {
-        Usuario usuario = (Usuario) session.getAttribute("usuario");
-        Administrador admin = service.adminFindById(usuario.getId());
-        model.addAttribute("admin", admin);
-        model.addAttribute("oferentes", service.oferentesPendientes());
-        return "presentation/admin/OferentesPendientes";
+
+    // ── OFERENTES PENDIENTES ───────────────────────────────
+    @GetMapping("/oferentesPendientes")
+    public ResponseEntity<?> oferentesPendientes() {
+        return ResponseEntity.ok(service.oferentesPendientes());
     }
-    @PostMapping("/admin/aprobarOferente")
-    public String aprobarOferente(@RequestParam Integer usuarioId, RedirectAttributes ra) {
+
+    @PostMapping("/aprobarOferente/{usuarioId}")
+    public ResponseEntity<?> aprobarOferente(@PathVariable Integer usuarioId) {
         String clave = service.aprobarOferente(usuarioId);
-        ra.addFlashAttribute("claveGenerada", clave);
-        ra.addFlashAttribute("tipoAprobado", "Oferente");
-        return "redirect:/admin/OferentesPendientes";
+        return ResponseEntity.ok(Map.of(
+                "clave", clave,
+                "mensaje", "Oferente aprobado"
+        ));
     }
-    @GetMapping("/admin/Caracteristicas")
-    public String caracteristicas(Model model) {
-        Usuario usuario = (Usuario) session.getAttribute("usuario");
-        Administrador admin = service.adminFindById(usuario.getId());
-        List<Caracteristica> raices = service.caracteristicasRaiz();
-        model.addAttribute("admin", admin);
-        model.addAttribute("caracteristicas", raices);
-        model.addAttribute("tieneHijos", service.mapTieneHijos(raices));
-        model.addAttribute("todasCaracteristicas", service.caracteristicasRaiz());
-        return "presentation/admin/Caracteristicas";
+
+    // ── CARACTERÍSTICAS ────────────────────────────────────
+    @GetMapping("/caracteristicas")
+    public ResponseEntity<?> caracteristicas() {
+        var raices = service.caracteristicasRaiz();
+        return ResponseEntity.ok(Map.of(
+                "caracteristicas", raices,
+                "tieneHijos", service.mapTieneHijos(raices)
+        ));
     }
-    @GetMapping("/admin/Caracteristicas/hijos/{id}")
-    public String caracteristicasHijos(@PathVariable Integer id, Model model) {
-        Usuario usuario = (Usuario) session.getAttribute("usuario");
-        Administrador admin = service.adminFindById(usuario.getId());
+
+    @GetMapping("/caracteristicas/hijos/{id}")
+    public ResponseEntity<?> caracteristicasHijos(@PathVariable Integer id) {
         Caracteristica padre = service.caracteristicaFindById(id);
-        List<Caracteristica> hijos = service.caracteristicasHijos(padre);
-        model.addAttribute("admin", admin);
-        model.addAttribute("caracteristicas", hijos);
-        model.addAttribute("tieneHijos", service.mapTieneHijos(hijos));
-        model.addAttribute("padre", padre);
-        model.addAttribute("todasCaracteristicas", service.caracteristicasRaiz());
-        return "presentation/admin/Caracteristicas";
+        var hijos = service.caracteristicasHijos(padre);
+        return ResponseEntity.ok(Map.of(
+                "caracteristicas", hijos,
+                "tieneHijos", service.mapTieneHijos(hijos),
+                "padre", padre
+        ));
     }
-    @PostMapping("/admin/crearCaracteristica")
-    public String crearCaracteristica(@RequestParam String nombre, @RequestParam(required = false) Integer padreId) {
+
+    @PostMapping("/crearCaracteristica")
+    public ResponseEntity<?> crearCaracteristica(@RequestBody Map<String, Object> body) {
+        String nombre = (String) body.get("nombre");
+        Integer padreId = body.get("padreId") != null
+                ? (Integer) body.get("padreId")
+                : null;
         service.crearCaracteristica(nombre, padreId);
-        return "redirect:/admin/Caracteristicas";
+        return ResponseEntity.ok("Característica creada");
     }
-    @GetMapping("/admin/Reportes")
-    public String reportes(@RequestParam(required = false) Integer anio, Model model) {
-        Usuario usuario = (Usuario) session.getAttribute("usuario");
-        Administrador admin = service.adminFindById(usuario.getId());
-        int anioActual = java.time.Year.now().getValue();
-        model.addAttribute("admin", admin);
-        model.addAttribute("anioActual", anioActual);
-        model.addAttribute("anioAnterior", anioActual - 1);
-        model.addAttribute("anioAnteAnterior", anioActual - 2);
-        if (anio != null) {
-            model.addAttribute("anioSeleccionado", anio);
-            model.addAttribute("porMes", service.puestosPorMes(anio));
-        }
-        return "presentation/admin/Reportes";
+
+    // ── REPORTES ───────────────────────────────────────────
+    @GetMapping("/reportes/{anio}")
+    public ResponseEntity<?> reportes(@PathVariable Integer anio) {
+        return ResponseEntity.ok(Map.of(
+                "porMes", service.puestosPorMes(anio)
+        ));
     }
-    @GetMapping("/admin/generarReporte")
-    public void generarReporte(@RequestParam Integer anio, jakarta.servlet.http.HttpServletResponse response) throws Exception {
+
+    @GetMapping("/generarReporte/{anio}")
+    public ResponseEntity<byte[]> generarReporte(@PathVariable Integer anio) throws Exception {
         byte[] pdf = service.generarReportePDF(anio);
-        response.setContentType("application/pdf");
-        response.setHeader("Content-Disposition", "inline; filename=reporte_" + anio + ".pdf");
-        response.getOutputStream().write(pdf);
-        response.getOutputStream().flush();
-    }
-    @GetMapping("/admin/salir")
-    public String salir() {
-        session.invalidate();
-        return "redirect:/";
+        return ResponseEntity.ok()
+                .header("Content-Type", "application/pdf")
+                .header("Content-Disposition", "inline; filename=reporte_" + anio + ".pdf")
+                .body(pdf);
     }
 }
