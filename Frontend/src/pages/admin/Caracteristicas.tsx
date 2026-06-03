@@ -1,0 +1,187 @@
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import PageAdmin from '../../components/layout/PageAdmin';
+
+const Caracteristicas = () => {
+    const [admin, setAdmin] = useState<any>(null);
+    const [caracteristicas, setCaracteristicas] = useState<any[]>([]);
+    const [tieneHijos, setTieneHijos] = useState<{ [id: number]: boolean }>({});
+    const [todasRaices, setTodasRaices] = useState<any[]>([]);
+    const [padre, setPadre] = useState<any>(null);
+    // historial de navegación para el breadcrumb
+    const [historial, setHistorial] = useState<any[]>([]);
+    const [nombre, setNombre] = useState('');
+    const [padreId, setPadreId] = useState<string>('');
+    const navigate = useNavigate();
+    const token = localStorage.getItem('token');
+
+    const cargarRaices = () => {
+        fetch('http://localhost:8080/api/admin/dashboard', {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+            .then(res => res.json())
+            .then(data => setAdmin(data));
+
+        fetch('http://localhost:8080/api/admin/caracteristicas', {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+            .then(res => res.json())
+            .then(data => {
+                setCaracteristicas(data.caracteristicas);
+                setTieneHijos(data.tieneHijos);
+                setTodasRaices(data.caracteristicas);
+                setPadre(null);
+                setHistorial([]);
+            })
+            .catch(() => navigate('/login'));
+    };
+
+    const cargarHijos = (id: number, nodoPadre: any) => {
+        fetch(`http://localhost:8080/api/admin/caracteristicas/hijos/${id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+            .then(res => res.json())
+            .then(data => {
+                setCaracteristicas(data.caracteristicas);
+                setTieneHijos(data.tieneHijos);
+                setPadre(data.padre);
+                setHistorial(prev => [...prev, nodoPadre]);
+            });
+    };
+
+    const irARaices = () => {
+        cargarRaices();
+    };
+
+    useEffect(() => { cargarRaices(); }, []);
+
+    const crearCaracteristica = () => {
+        fetch('http://localhost:8080/api/admin/crearCaracteristica', {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ nombre, padreId: padreId ? parseInt(padreId) : null })
+        })
+            .then(() => {
+                setNombre('');
+                setPadreId('');
+                // recargar la vista actual
+                if (padre) {
+                    cargarHijos(padre.id, historial[historial.length - 1]);
+                } else {
+                    cargarRaices();
+                }
+            });
+    };
+
+    const inputStyle: React.CSSProperties = {
+        backgroundColor: '#0e1a22',
+        border: '1px solid #4a5f5f',
+        color: '#cdd9d9',
+    };
+
+    return (
+        <PageAdmin correoAdmin={admin?.usuario?.correo}>
+            <div className="container-fluid px-3 mt-4">
+                <h5 className="text-white mb-3">Características</h5>
+                <div className="row g-3">
+                    {/* Lista de características */}
+                    <div className="col-md-7">
+                        <div className="card h-100" style={{ backgroundColor: 'rgb(35,46,46)', borderColor: '#4a5f5f' }}>
+                            <div className="card-body">
+                                {/* Breadcrumb */}
+                                <span style={{ color: '#8aa8a8', fontSize: '0.8rem' }}>Ruta:</span>
+                                <div className="mt-1 mb-3" style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
+                                    <button
+                                        onClick={irARaices}
+                                        style={{ backgroundColor: 'rgba(10,202,154,0.18)', color: 'rgb(10,202,154)', border: '1px solid rgba(10,202,154,0.35)', padding: '2px 10px', borderRadius: '4px', fontSize: '0.8rem', cursor: 'pointer' }}>
+                                        Raíces
+                                    </button>
+                                    {historial.map((h, i) => (
+                                        <span key={i} style={{ color: '#8aa8a8' }}>
+                                            {' / '}
+                                            <span style={{ backgroundColor: 'rgba(10,202,154,0.18)', color: 'rgb(10,202,154)', border: '1px solid rgba(10,202,154,0.35)', padding: '2px 10px', borderRadius: '4px', fontSize: '0.8rem' }}>
+                                                {h.nombre}
+                                            </span>
+                                        </span>
+                                    ))}
+                                    {padre && (
+                                        <span style={{ color: '#8aa8a8' }}>
+                                            {' / '}
+                                            <span style={{ backgroundColor: 'rgba(10,202,154,0.18)', color: 'rgb(10,202,154)', border: '1px solid rgba(10,202,154,0.35)', padding: '2px 10px', borderRadius: '4px', fontSize: '0.8rem' }}>
+                                                {padre.nombre}
+                                            </span>
+                                        </span>
+                                    )}
+                                </div>
+
+                                <div style={{ color: '#8aa8a8', fontSize: '0.8rem' }} className="mb-2">Categorías</div>
+                                <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                                    {caracteristicas.length === 0 && (
+                                        <li style={{ color: '#8aa8a8', padding: '8px 0' }}>Sin subcategorías.</li>
+                                    )}
+                                    {caracteristicas.map((car: any) => (
+                                        <li key={car.id}
+                                            className="d-flex justify-content-between align-items-center py-2"
+                                            style={{ borderBottom: '1px solid #2e3e3e', color: '#cdd9d9' }}>
+                                            <span>{car.nombre}</span>
+                                            {tieneHijos[car.id] && (
+                                                <button
+                                                    onClick={() => cargarHijos(car.id, car)}
+                                                    style={{ background: 'transparent', border: '1px solid #4a5f5f', color: '#8aa8a8', padding: '2px 10px', borderRadius: '4px', fontSize: '0.85rem', cursor: 'pointer' }}>
+                                                    Entrar
+                                                </button>
+                                            )}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Formulario agregar */}
+                    <div className="col-md-5">
+                        <div className="card h-100" style={{ backgroundColor: 'rgb(35,46,46)', borderColor: '#4a5f5f' }}>
+                            <div className="card-body">
+                                <h6 style={{ color: 'rgb(10,202,154)' }} className="mb-3">Agregar Característica</h6>
+                                <div className="mb-3">
+                                    <label className="mb-1 d-block" style={{ color: '#8aa8a8', fontSize: '0.8rem' }}>Nombre</label>
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        style={inputStyle}
+                                        value={nombre}
+                                        onChange={e => setNombre(e.target.value)}
+                                    />
+                                </div>
+                                <div className="mb-3">
+                                    <label className="mb-1 d-block" style={{ color: '#8aa8a8', fontSize: '0.8rem' }}>Padre</label>
+                                    <select
+                                        className="form-select"
+                                        style={inputStyle}
+                                        value={padreId}
+                                        onChange={e => setPadreId(e.target.value)}>
+                                        <option value="">Sin padre (raíz)</option>
+                                        {todasRaices.map((car: any) => (
+                                            <option key={car.id} value={car.id}>{car.nombre}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <button
+                                    onClick={crearCaracteristica}
+                                    className="btn"
+                                    style={{ backgroundColor: 'rgb(10,202,154)', color: '#080f15', fontWeight: 700 }}>
+                                    <i className="fa-solid fa-plus me-1"></i> Crear
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </PageAdmin>
+    );
+};
+
+export default Caracteristicas;
