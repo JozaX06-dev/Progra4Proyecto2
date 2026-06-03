@@ -431,4 +431,15 @@ public class Service {
         if (rol.equals("admin")) return "Administrador";
         return "";
     }
+    public Empresa getEmpresaActual() {
+        String correo = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Usuario usuario = usuarioFindByCorreo(correo);
+        return empresaFindById(usuario.getId());
+    }
+
+    public Administrador getAdminActual() {
+        String correo = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Usuario usuario = usuarioFindByCorreo(correo);
+        return adminFindById(usuario.getId());
+    }
 }
