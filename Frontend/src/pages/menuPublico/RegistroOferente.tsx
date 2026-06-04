@@ -8,6 +8,8 @@ const RegistroOferente = () => {
     });
     const [nacionalidades, setNacionalidades] = useState<any[]>([]);
     const [exito, setExito] = useState(false);
+    const [errorCorreo, setErrorCorreo] = useState(false);
+    const [errorVacio, setErrorVacio] = useState(false);
 
     useEffect(() => {
         fetch('http://localhost:8080/api/publico/nacionalidades')
@@ -20,11 +22,20 @@ const RegistroOferente = () => {
     };
 
     const handleSubmit = () => {
+        if (!form.identificacion || !form.nombre || !form.apellido || !form.nacionalidadIso || !form.telefono || !form.correo || !form.lugarResidencia) {
+            setErrorVacio(true);
+            setExito(false);
+            setErrorCorreo(false);
+            return;
+        }
+        setErrorVacio(false);
         fetch('http://localhost:8080/api/publico/registroOferente', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(form)
-        }).then(() => {
+        }).then(res => {
+            if (res.status === 409) { setErrorCorreo(true); setExito(false); return; }
+            setErrorCorreo(false);
             setExito(true);
             setForm({ identificacion: '', nombre: '', apellido: '', nacionalidadIso: '', telefono: '', correo: '', lugarResidencia: '' });
         });
@@ -84,6 +95,16 @@ const RegistroOferente = () => {
                                 <div className="mt-3 text-center p-2" style={{ backgroundColor: 'rgb(25,35,35)', borderRadius: '8px', border: '1px solid rgb(10,202,154)' }}>
                                     <i className="fa-solid fa-circle-check me-2" style={{ color: 'rgb(10,202,154)' }}></i>
                                     <span style={{ color: 'rgb(10,202,154)' }}>Registro exitoso, en espera de aprobación.</span>
+                                </div>
+                            )}
+                            {errorCorreo && (
+                                <div className="alert alert-danger mt-3" role="alert">
+                                    El correo ya está registrado.
+                                </div>
+                            )}
+                            {errorVacio && (
+                                <div className="alert alert-warning mt-3" role="alert">
+                                    Por favor completá todos los campos.
                                 </div>
                             )}
                         </div>

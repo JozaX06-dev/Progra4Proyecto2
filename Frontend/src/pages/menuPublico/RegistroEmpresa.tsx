@@ -6,17 +6,28 @@ const RegistroEmpresa = () => {
         nombre: '', correo: '', localizacion: '', telefono: '', descripcion: ''
     });
     const [exito, setExito] = useState(false);
+    const [errorCorreo, setErrorCorreo] = useState(false);
+    const [errorVacio, setErrorVacio] = useState(false);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setForm({ ...form, [e.target.name]: e.target.value });
     };
 
     const handleSubmit = () => {
+        if (!form.nombre || !form.correo || !form.localizacion || !form.telefono || !form.descripcion) {
+            setErrorVacio(true);
+            setExito(false);
+            setErrorCorreo(false);
+            return;
+        }
+        setErrorVacio(false);
         fetch('http://localhost:8080/api/publico/registroEmpresa', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(form)
-        }).then(() => {
+        }).then(res => {
+            if (res.status === 409) { setErrorCorreo(true); setExito(false); return; }
+            setErrorCorreo(false);
             setExito(true);
             setForm({ nombre: '', correo: '', localizacion: '', telefono: '', descripcion: '' });
         });
@@ -63,6 +74,16 @@ const RegistroEmpresa = () => {
                                 <div className="mt-3 text-center p-2" style={{ backgroundColor: 'rgb(25,35,35)', borderRadius: '8px', border: '1px solid rgb(10,202,154)' }}>
                                     <i className="fa-solid fa-circle-check me-2" style={{ color: 'rgb(10,202,154)' }}></i>
                                     <span style={{ color: 'rgb(10,202,154)' }}>Registro exitoso, en espera de aprobación.</span>
+                                </div>
+                            )}
+                            {errorCorreo && (
+                                <div className="alert alert-danger mt-3" role="alert">
+                                    El correo ya está registrado.
+                                </div>
+                            )}
+                            {errorVacio && (
+                                <div className="alert alert-warning mt-3" role="alert">
+                                    Por favor completá todos los campos.
                                 </div>
                             )}
                         </div>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import ProtectedRoute from './components/ProtectedRoute';
 // Público
 import MenuPartePublica from './pages/menuPublico/MenuPartePublica';
 import BuscarPuestos from './pages/menuPublico/BuscarPuestos';
@@ -8,6 +9,8 @@ import RegistroEmpresa from './pages/menuPublico/RegistroEmpresa';
 import RegistroOferente from './pages/menuPublico/RegistroOferente';
 // Oferente
 import MenuOferente from './pages/oferente/MenuOferente';
+import MisHabilidades from './pages/oferente/MisHabilidades';
+import MiCV from './pages/oferente/MiCV';
 // Empresa
 import MenuEmpresa from './pages/empresa/MenuEmpresa';
 import MisPuestos from './pages/empresa/MisPuestos';
@@ -32,19 +35,21 @@ function App() {
                 <Route path="/registro/empresa" element={<RegistroEmpresa />} />
                 <Route path="/registro/oferente" element={<RegistroOferente />} />
                 {/* Oferente */}
-                <Route path="/oferente/dashboard" element={<MenuOferente />} />
+                <Route path="/oferente/dashboard" element={<ProtectedRoute><MenuOferente /></ProtectedRoute>} />
+                <Route path="/oferente/misHabilidades" element={<ProtectedRoute><MisHabilidades /></ProtectedRoute>} />
+                <Route path="/oferente/miCV" element={<ProtectedRoute><MiCV /></ProtectedRoute>} />
                 {/* Empresa */}
-                <Route path="/empresa/dashboard" element={<MenuEmpresa />} />
-                <Route path="/empresa/mis-puestos" element={<MisPuestos />} />
-                <Route path="/empresa/publicar-puesto" element={<PublicarPuesto />} />
-                <Route path="/empresa/buscar-candidatos/:puestoId" element={<BuscarCandidatos />} />
-                <Route path="/empresa/detalle-oferente/:oferenteId" element={<DetalleOferente />} />
+                <Route path="/empresa/dashboard" element={<ProtectedRoute><MenuEmpresa /></ProtectedRoute>} />
+                <Route path="/empresa/mis-puestos" element={<ProtectedRoute><MisPuestos /></ProtectedRoute>} />
+                <Route path="/empresa/publicar-puesto" element={<ProtectedRoute><PublicarPuesto /></ProtectedRoute>} />
+                <Route path="/empresa/buscar-candidatos/:puestoId" element={<ProtectedRoute><BuscarCandidatos /></ProtectedRoute>} />
+                <Route path="/empresa/detalle-oferente/:oferenteId" element={<ProtectedRoute><DetalleOferente /></ProtectedRoute>} />
                 {/* Admin */}
-                <Route path="/admin/dashboard" element={<MenuAdmin />} />
-                <Route path="/admin/empresas-pendientes" element={<EmpresasPendientes />} />
-                <Route path="/admin/oferentes-pendientes" element={<OferentesPendientes />} />
-                <Route path="/admin/caracteristicas" element={<Caracteristicas />} />
-                <Route path="/admin/reportes" element={<Reportes />} />
+                <Route path="/admin/dashboard" element={<ProtectedRoute><MenuAdmin /></ProtectedRoute>} />
+                <Route path="/admin/empresas-pendientes" element={<ProtectedRoute><EmpresasPendientes /></ProtectedRoute>} />
+                <Route path="/admin/oferentes-pendientes" element={<ProtectedRoute><OferentesPendientes /></ProtectedRoute>} />
+                <Route path="/admin/caracteristicas" element={<ProtectedRoute><Caracteristicas /></ProtectedRoute>} />
+                <Route path="/admin/reportes" element={<ProtectedRoute><Reportes /></ProtectedRoute>} />
             </Routes>
         </BrowserRouter>
     );
