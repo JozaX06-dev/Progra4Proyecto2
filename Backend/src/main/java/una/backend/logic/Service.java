@@ -196,6 +196,15 @@ public class Service {
             puestoRepository.save(puesto);
         }
     }
+
+    public void activarPuesto(int puestoId) {
+        Puesto puesto = puestoRepository.findById(puestoId).orElse(null);
+        if (puesto != null) {
+            puesto.setActivo((byte) 1);
+            puestoRepository.save(puesto);
+        }
+    }
+
     public void publicarPuesto(Empresa empresa, String descripcion, Double salario, int esPublico, List<Integer> caracteristicaIds, List<Integer> niveles) {
         Puesto puesto = new Puesto();
         puesto.setEmpresa(empresa);

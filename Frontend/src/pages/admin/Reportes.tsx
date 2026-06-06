@@ -7,6 +7,8 @@ const Reportes = () => {
     const anioActual = new Date().getFullYear();
     const [anioSeleccionado, setAnioSeleccionado] = useState<number>(anioActual);
     const [porMes, setPorMes] = useState<{ [mes: string]: number } | null>(null);
+    const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+    const [cargandoPDF, setCargandoPDF] = useState(false);
     const navigate = useNavigate();
     const token = localStorage.getItem('token');
 
@@ -19,7 +21,21 @@ const Reportes = () => {
             .catch(() => navigate('/login'));
     }, []);
 
+    // Limpiar PDF si cambia el año
+    const handleAnioChange = (anio: number) => {
+        setAnioSeleccionado(anio);
+        setPorMes(null);
+        if (pdfUrl) {
+            URL.revokeObjectURL(pdfUrl);
+            setPdfUrl(null);
+        }
+    };
+
     const verReporte = () => {
+        if (pdfUrl) {
+            URL.revokeObjectURL(pdfUrl);
+            setPdfUrl(null);
+        }
         fetch(`http://localhost:8080/api/admin/reportes/${anioSeleccionado}`, {
             headers: { Authorization: `Bearer ${token}` }
         })
@@ -27,19 +43,22 @@ const Reportes = () => {
             .then(data => setPorMes(data.porMes));
     };
 
-    const descargarPDF = () => {
+    const verPDF = () => {
+        if (pdfUrl) {
+            // Ya está cargado, solo mostrarlo/ocultarlo
+            setPdfUrl(null);
+            return;
+        }
+        setCargandoPDF(true);
         fetch(`http://localhost:8080/api/admin/generarReporte/${anioSeleccionado}`, {
             headers: { Authorization: `Bearer ${token}` }
         })
             .then(res => res.blob())
             .then(blob => {
                 const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `reporte_${anioSeleccionado}.pdf`;
-                a.click();
-                URL.revokeObjectURL(url);
-            });
+                setPdfUrl(url);
+            })
+            .finally(() => setCargandoPDF(false));
     };
 
     const inputStyle: React.CSSProperties = {
@@ -64,7 +83,7 @@ const Reportes = () => {
                                         className="form-select"
                                         style={inputStyle}
                                         value={anioSeleccionado}
-                                        onChange={e => setAnioSeleccionado(Number(e.target.value))}>
+                                        onChange={e => handleAnioChange(Number(e.target.value))}>
                                         <option value={anioActual}>{anioActual}</option>
                                         <option value={anioActual - 1}>{anioActual - 1}</option>
                                         <option value={anioActual - 2}>{anioActual - 2}</option>
@@ -78,17 +97,19 @@ const Reportes = () => {
                                 </button>
                                 {porMes && (
                                     <button
-                                        onClick={descargarPDF}
+                                        onClick={verPDF}
+                                        disabled={cargandoPDF}
                                         className="btn w-100"
                                         style={{ backgroundColor: '#2e3e3e', color: '#cdd9d9', fontWeight: 700 }}>
-                                        <i className="fa-solid fa-file-pdf me-1"></i> Descargar PDF
+                                        <i className="fa-solid fa-file-pdf me-1"></i>
+                                        {cargandoPDF ? 'Cargando...' : pdfUrl ? 'Ocultar PDF' : 'Ver PDF'}
                                     </button>
                                 )}
                             </div>
                         </div>
                     </div>
 
-                    {/* Tabla de resultados */}
+                    {/* Tabla */}
                     <div className="col-md-8">
                         <div className="card h-100" style={{ backgroundColor: 'rgb(35,46,46)', borderColor: '#4a5f5f' }}>
                             <div className="card-body">
@@ -100,18 +121,18 @@ const Reportes = () => {
                                 ) : (
                                     <table className="table table-borderless" style={{ color: '#cdd9d9', fontSize: '0.9rem' }}>
                                         <thead>
-                                            <tr style={{ borderBottom: '1px solid #4a5f5f' }}>
-                                                <th style={{ color: 'rgb(10,202,154)', backgroundColor: 'transparent' }}>Mes</th>
-                                                <th style={{ color: 'rgb(10,202,154)', backgroundColor: 'transparent' }}>Cantidad de puestos</th>
-                                            </tr>
+                                        <tr style={{ borderBottom: '1px solid #4a5f5b' }}>
+                                            <th style={{ color: 'rgb(10,202,154)', backgroundColor: 'transparent' }}>Mes</th>
+                                            <th style={{ color: 'rgb(10,202,154)', backgroundColor: 'transparent' }}>Cantidad de puestos</th>
+                                        </tr>
                                         </thead>
                                         <tbody>
-                                            {Object.entries(porMes).map(([mes, cantidad]) => (
-                                                <tr key={mes} style={{ borderBottom: '1px solid #2e3e3e' }}>
-                                                    <td style={{ color: '#cdd9d9', backgroundColor: 'transparent' }}>{mes}</td>
-                                                    <td style={{ color: '#cdd9d9', backgroundColor: 'transparent' }}>{cantidad}</td>
-                                                </tr>
-                                            ))}
+                                        {Object.entries(porMes).map(([mes, cantidad]) => (
+                                            <tr key={mes} style={{ borderBottom: '1px solid #2e3e3e' }}>
+                                                <td style={{ color: '#cdd9d9', backgroundColor: 'transparent' }}>{mes}</td>
+                                                <td style={{ color: '#cdd9d9', backgroundColor: 'transparent' }}>{cantidad}</td>
+                                            </tr>
+                                        ))}
                                         </tbody>
                                     </table>
                                 )}
@@ -119,6 +140,19 @@ const Reportes = () => {
                         </div>
                     </div>
                 </div>
+
+                {/* PDF inline */}
+                {pdfUrl && (
+                    <div className="card mt-3" style={{ backgroundColor: 'rgb(35,46,46)', borderColor: '#4a5f5f' }}>
+                        <div className="card-body" style={{ padding: '8px' }}>
+                            <iframe
+                                src={pdfUrl}
+                                title={`Reporte ${anioSeleccionado}`}
+                                style={{ width: '100%', height: '650px', border: 'none', borderRadius: '4px' }}
+                            />
+                        </div>
+                    </div>
+                )}
             </div>
         </PageAdmin>
     );

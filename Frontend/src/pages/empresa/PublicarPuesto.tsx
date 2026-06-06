@@ -10,11 +10,11 @@ const PublicarPuesto = () => {
     const [esPublico, setEsPublico] = useState(1);
     const [niveles, setNiveles] = useState<{ [id: number]: number }>({});
     const [enviando, setEnviando] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
     const token = localStorage.getItem('token');
 
     useEffect(() => {
-        // Cargar empresa y características al mismo tiempo
         fetch('http://localhost:8080/api/empresa/dashboard', {
             headers: { Authorization: `Bearer ${token}` }
         })
@@ -27,7 +27,6 @@ const PublicarPuesto = () => {
             .then(res => res.json())
             .then(data => {
                 setCaracteristicas(data.caracteristicas);
-                // Inicializar todos los niveles en 0
                 const init: { [id: number]: number } = {};
                 data.caracteristicas.forEach((c: any) => { init[c.id] = 0; });
                 setNiveles(init);
@@ -39,7 +38,19 @@ const PublicarPuesto = () => {
     };
 
     const handleSubmit = () => {
+        // Validación
+        if (!descripcion.trim()) {
+            setError('La descripción del puesto es obligatoria.');
+            return;
+        }
+        if (!salario || isNaN(parseFloat(salario)) || parseFloat(salario) <= 0) {
+            setError('El salario debe ser un número mayor a 0.');
+            return;
+        }
+
+        setError(null);
         setEnviando(true);
+
         const caracteristicaIds = caracteristicas.map(c => c.id);
         const nivelesArray = caracteristicas.map(c => niveles[c.id] ?? 0);
 
@@ -51,7 +62,11 @@ const PublicarPuesto = () => {
             },
             body: JSON.stringify({ descripcion, salario: parseFloat(salario), esPublico, caracteristicaIds, niveles: nivelesArray })
         })
-            .then(() => navigate('/empresa/mis-puestos'))
+            .then(res => {
+                if (!res.ok) throw new Error('Error al publicar');
+                navigate('/empresa/mis-puestos');
+            })
+            .catch(() => setError('Ocurrió un error al publicar el puesto. Intentá de nuevo.'))
             .finally(() => setEnviando(false));
     };
 
@@ -73,31 +88,39 @@ const PublicarPuesto = () => {
                         <i className="fa-solid fa-arrow-left me-1"></i> Volver
                     </button>
                 </div>
+
+                {/* Error general */}
+                {error && (
+                    <div className="alert mb-3" style={{ backgroundColor: 'rgba(180,50,50,0.2)', border: '1px solid #7a2f2f', color: '#f5a0a0' }}>
+                        <i className="fa-solid fa-circle-exclamation me-2"></i>{error}
+                    </div>
+                )}
+
                 <div className="card" style={{ backgroundColor: 'rgb(35,46,46)', borderColor: '#4a5f5f' }}>
                     <div className="card-body">
                         <div className="mb-3">
                             <label className="mb-1 d-block" style={{ color: '#8aa8a8', fontSize: '0.8rem', textTransform: 'uppercase' }}>
-                                Descripción del puesto
+                                Descripción del puesto <span style={{ color: '#f5a0a0' }}>*</span>
                             </label>
                             <textarea
                                 className="form-control"
                                 rows={3}
-                                style={inputStyle}
+                                style={{ ...inputStyle, borderColor: error && !descripcion.trim() ? '#7a2f2f' : '#4a5f5f' }}
                                 value={descripcion}
-                                onChange={e => setDescripcion(e.target.value)}
+                                onChange={e => { setDescripcion(e.target.value); setError(null); }}
                             />
                         </div>
                         <div className="mb-3">
                             <label className="mb-1 d-block" style={{ color: '#8aa8a8', fontSize: '0.8rem', textTransform: 'uppercase' }}>
-                                Salario ofrecido (USD)
+                                Salario ofrecido (USD) <span style={{ color: '#f5a0a0' }}>*</span>
                             </label>
                             <input
                                 type="number"
                                 step="0.01"
                                 className="form-control"
-                                style={inputStyle}
+                                style={{ ...inputStyle, borderColor: error && (!salario || parseFloat(salario) <= 0) ? '#7a2f2f' : '#4a5f5f' }}
                                 value={salario}
-                                onChange={e => setSalario(e.target.value)}
+                                onChange={e => { setSalario(e.target.value); setError(null); }}
                             />
                         </div>
                         <div className="mb-3">
@@ -120,28 +143,28 @@ const PublicarPuesto = () => {
                             </p>
                             <table className="table table-borderless mb-0" style={{ color: '#cdd9d9', fontSize: '0.9rem' }}>
                                 <thead>
-                                    <tr style={{ borderBottom: '1px solid #4a5f5f' }}>
-                                        <th style={{ color: 'rgb(10,202,154)', backgroundColor: 'transparent' }}>Característica</th>
-                                        <th style={{ color: 'rgb(10,202,154)', backgroundColor: 'transparent', width: '180px' }}>Nivel deseado (0 = no aplica)</th>
-                                    </tr>
+                                <tr style={{ borderBottom: '1px solid #4a5f5f' }}>
+                                    <th style={{ color: 'rgb(10,202,154)', backgroundColor: 'transparent' }}>Característica</th>
+                                    <th style={{ color: 'rgb(10,202,154)', backgroundColor: 'transparent', width: '180px' }}>Nivel deseado (0 = no aplica)</th>
+                                </tr>
                                 </thead>
                                 <tbody>
-                                    {caracteristicas.map(car => (
-                                        <tr key={car.id} style={{ borderBottom: '1px solid #2e3e3e' }}>
-                                            <td style={{ color: '#cdd9d9', backgroundColor: 'transparent' }}>{car.nombre}</td>
-                                            <td style={{ backgroundColor: 'transparent' }}>
-                                                <input
-                                                    type="number"
-                                                    min={0}
-                                                    max={5}
-                                                    className="form-control form-control-sm"
-                                                    style={{ ...inputStyle, width: '80px' }}
-                                                    value={niveles[car.id] ?? 0}
-                                                    onChange={e => handleNivel(car.id, Number(e.target.value))}
-                                                />
-                                            </td>
-                                        </tr>
-                                    ))}
+                                {caracteristicas.map(car => (
+                                    <tr key={car.id} style={{ borderBottom: '1px solid #2e3e3e' }}>
+                                        <td style={{ color: '#cdd9d9', backgroundColor: 'transparent' }}>{car.nombre}</td>
+                                        <td style={{ backgroundColor: 'transparent' }}>
+                                            <input
+                                                type="number"
+                                                min={0}
+                                                max={5}
+                                                className="form-control form-control-sm"
+                                                style={{ ...inputStyle, width: '80px' }}
+                                                value={niveles[car.id] ?? 0}
+                                                onChange={e => handleNivel(car.id, Number(e.target.value))}
+                                            />
+                                        </td>
+                                    </tr>
+                                ))}
                                 </tbody>
                             </table>
                         </div>

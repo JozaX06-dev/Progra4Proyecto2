@@ -9,6 +9,9 @@ const DetalleOferente = () => {
     const [empresa, setEmpresa] = useState<any>(null);
     const [oferente, setOferente] = useState<any>(null);
     const [habilidades, setHabilidades] = useState<any[]>([]);
+    const [cvUrl, setCvUrl] = useState<string | null>(null);
+    const [cvError, setCvError] = useState(false);
+    const [cargandoCV, setCargandoCV] = useState(false);
     const navigate = useNavigate();
     const token = localStorage.getItem('token');
 
@@ -30,7 +33,26 @@ const DetalleOferente = () => {
     }, [oferenteId]);
 
     const verCV = () => {
-        window.open(`http://localhost:8080/api/empresa/verCV/${oferenteId}?token=${token}`, '_blank');
+        // Si ya lo cargamos, lo mostramos/ocultamos
+        if (cvUrl) {
+            setCvUrl(null);
+            return;
+        }
+        setCargandoCV(true);
+        setCvError(false);
+        fetch(`http://localhost:8080/api/empresa/verCV/${oferenteId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+            .then(res => {
+                if (!res.ok) throw new Error('Sin CV');
+                return res.blob();
+            })
+            .then(blob => {
+                const url = URL.createObjectURL(blob);
+                setCvUrl(url);
+            })
+            .catch(() => setCvError(true))
+            .finally(() => setCargandoCV(false));
     };
 
     return (
@@ -64,16 +86,29 @@ const DetalleOferente = () => {
                         <p style={{ color: '#cdd9d9', margin: 0 }}>
                             <strong style={{ color: '#8aa8a8' }}>Residencia:</strong> {oferente?.lugarResidencia}
                         </p>
+
+                        {/* CV */}
                         <div className="mt-3">
                             {oferente?.cv ? (
-                                <button
-                                    onClick={verCV}
-                                    className="btn btn-sm"
-                                    style={{ backgroundColor: 'rgb(10,202,154)', color: '#080f15', fontWeight: 700 }}>
-                                    <i className="fa-solid fa-file-pdf me-1"></i> Ver CV
-                                </button>
+                                <>
+                                    <button
+                                        onClick={verCV}
+                                        disabled={cargandoCV}
+                                        className="btn btn-sm"
+                                        style={{ backgroundColor: 'rgb(10,202,154)', color: '#080f15', fontWeight: 700 }}>
+                                        <i className="fa-solid fa-file-pdf me-1"></i>
+                                        {cargandoCV ? 'Cargando...' : cvUrl ? 'Ocultar CV' : 'Ver CV'}
+                                    </button>
+                                    {cvError && (
+                                        <span className="ms-3" style={{ color: '#f5a0a0', fontSize: '0.85rem' }}>
+                                            <i className="fa-solid fa-circle-exclamation me-1"></i>
+                                            No se pudo cargar el CV. El archivo puede no existir en el servidor.
+                                        </span>
+                                    )}
+                                </>
                             ) : (
                                 <span style={{ color: '#8aa8a8', fontSize: '0.85rem' }}>
+                                    <i className="fa-solid fa-file-circle-xmark me-1"></i>
                                     Este oferente no ha subido su CV.
                                 </span>
                             )}
@@ -81,31 +116,44 @@ const DetalleOferente = () => {
                     </div>
                 </div>
 
+                {/* Visor de CV inline */}
+                {cvUrl && (
+                    <div className="card mb-3" style={{ backgroundColor: 'rgb(35,46,46)', borderColor: '#4a5f5f' }}>
+                        <div className="card-body" style={{ padding: '8px' }}>
+                            <iframe
+                                src={cvUrl}
+                                title="CV del oferente"
+                                style={{ width: '100%', height: '600px', border: 'none', borderRadius: '4px' }}
+                            />
+                        </div>
+                    </div>
+                )}
+
                 {/* Habilidades */}
                 <div className="card" style={{ backgroundColor: 'rgb(35,46,46)', borderColor: '#4a5f5f' }}>
                     <div className="card-body">
                         <h6 style={{ color: 'rgb(10,202,154)' }} className="mb-3">Habilidades</h6>
                         <table className="table table-borderless mb-0" style={{ color: '#cdd9d9', fontSize: '0.9rem' }}>
                             <thead>
-                                <tr style={{ borderBottom: '1px solid #4a5f5f' }}>
-                                    <th style={{ color: 'rgb(10,202,154)', backgroundColor: 'transparent' }}>Característica</th>
-                                    <th className="text-center" style={{ color: 'rgb(10,202,154)', backgroundColor: 'transparent' }}>Nivel</th>
-                                </tr>
+                            <tr style={{ borderBottom: '1px solid #4a5f5f' }}>
+                                <th style={{ color: 'rgb(10,202,154)', backgroundColor: 'transparent' }}>Característica</th>
+                                <th className="text-center" style={{ color: 'rgb(10,202,154)', backgroundColor: 'transparent' }}>Nivel</th>
+                            </tr>
                             </thead>
                             <tbody>
-                                {habilidades.map((h: any, i: number) => (
-                                    <tr key={i} style={{ borderBottom: '1px solid #2e3e3e' }}>
-                                        <td style={{ color: '#cdd9d9', backgroundColor: 'transparent' }}>{h.caracteristica.nombre}</td>
-                                        <td className="text-center" style={{ color: '#cdd9d9', backgroundColor: 'transparent' }}>{h.nivel}</td>
-                                    </tr>
-                                ))}
-                                {habilidades.length === 0 && (
-                                    <tr>
-                                        <td colSpan={2} style={{ color: '#8aa8a8', textAlign: 'center', backgroundColor: 'transparent' }}>
-                                            Sin habilidades registradas.
-                                        </td>
-                                    </tr>
-                                )}
+                            {habilidades.map((h: any, i: number) => (
+                                <tr key={i} style={{ borderBottom: '1px solid #2e3e3e' }}>
+                                    <td style={{ color: '#cdd9d9', backgroundColor: 'transparent' }}>{h.caracteristica.nombre}</td>
+                                    <td className="text-center" style={{ color: '#cdd9d9', backgroundColor: 'transparent' }}>{h.nivel}</td>
+                                </tr>
+                            ))}
+                            {habilidades.length === 0 && (
+                                <tr>
+                                    <td colSpan={2} style={{ color: '#8aa8a8', textAlign: 'center', backgroundColor: 'transparent' }}>
+                                        Sin habilidades registradas.
+                                    </td>
+                                </tr>
+                            )}
                             </tbody>
                         </table>
                     </div>

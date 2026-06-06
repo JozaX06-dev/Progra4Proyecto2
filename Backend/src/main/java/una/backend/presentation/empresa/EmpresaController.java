@@ -43,6 +43,13 @@ public class EmpresaController {
         return ResponseEntity.ok("Puesto desactivado");
     }
 
+    // ── ACTIVAR PUESTO ─────────────────────────────────────
+    @PostMapping("/activarPuesto/{puestoId}")
+    public ResponseEntity<?> activarPuesto(@PathVariable Integer puestoId) {
+        service.activarPuesto(puestoId);
+        return ResponseEntity.ok("Puesto activado");
+    }
+
     // ── PUBLICAR PUESTO ────────────────────────────────────
     @GetMapping("/publicarPuesto")
     public ResponseEntity<?> mostrarPublicarPuesto() {
@@ -89,7 +96,16 @@ public class EmpresaController {
     @GetMapping("/verCV/{oferenteId}")
     public ResponseEntity<byte[]> verCV(@PathVariable Integer oferenteId) throws IOException {
         Oferente oferente = service.oferenteFindById(oferenteId);
+
+        if (oferente.getCv() == null || oferente.getCv().isBlank()) {
+            return ResponseEntity.notFound().build();
+        }
+
         Path ruta = Paths.get(oferente.getCv());
+        if (!Files.exists(ruta)) {
+            return ResponseEntity.notFound().build();
+        }
+
         byte[] contenido = Files.readAllBytes(ruta);
         return ResponseEntity.ok()
                 .header("Content-Type", "application/pdf")

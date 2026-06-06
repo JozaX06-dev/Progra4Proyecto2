@@ -22,8 +22,9 @@ const MisPuestos = () => {
 
     useEffect(() => { cargarDatos(); }, []);
 
-    const desactivar = (puestoId: number) => {
-        fetch(`http://localhost:8080/api/empresa/desactivarPuesto/${puestoId}`, {
+    const togglePuesto = (puestoId: number, activo: number) => {
+        const endpoint = activo === 1 ? 'desactivarPuesto' : 'activarPuesto';
+        fetch(`http://localhost:8080/api/empresa/${endpoint}/${puestoId}`, {
             method: 'POST',
             headers: { Authorization: `Bearer ${token}` }
         }).then(() => cargarDatos());
@@ -45,47 +46,49 @@ const MisPuestos = () => {
                     <div className="card-body">
                         <table className="table table-borderless mb-0" style={{ color: '#cdd9d9', fontSize: '0.9rem' }}>
                             <thead>
-                                <tr style={{ borderBottom: '1px solid #4a5f5f' }}>
-                                    <th style={{ color: 'rgb(10,202,154)', backgroundColor: 'transparent' }}>ID</th>
-                                    <th style={{ color: 'rgb(10,202,154)', backgroundColor: 'transparent' }}>Descripción</th>
-                                    <th style={{ color: 'rgb(10,202,154)', backgroundColor: 'transparent' }}>Salario</th>
-                                    <th style={{ color: 'rgb(10,202,154)', backgroundColor: 'transparent' }}>Tipo</th>
-                                    <th style={{ color: 'rgb(10,202,154)', backgroundColor: 'transparent' }}>Activo</th>
-                                    <th className="text-center" style={{ color: 'rgb(10,202,154)', backgroundColor: 'transparent' }}>Acciones</th>
-                                </tr>
+                            <tr style={{ borderBottom: '1px solid #4a5f5f' }}>
+                                <th style={{ color: 'rgb(10,202,154)', backgroundColor: 'transparent' }}>ID</th>
+                                <th style={{ color: 'rgb(10,202,154)', backgroundColor: 'transparent' }}>Descripción</th>
+                                <th style={{ color: 'rgb(10,202,154)', backgroundColor: 'transparent' }}>Salario</th>
+                                <th style={{ color: 'rgb(10,202,154)', backgroundColor: 'transparent' }}>Tipo</th>
+                                <th style={{ color: 'rgb(10,202,154)', backgroundColor: 'transparent' }}>Activo</th>
+                                <th className="text-center" style={{ color: 'rgb(10,202,154)', backgroundColor: 'transparent' }}>Acciones</th>
+                            </tr>
                             </thead>
                             <tbody>
-                                {puestos.map(puesto => (
-                                    <tr key={puesto.id} style={{ borderBottom: '1px solid #2e3e3e' }}>
-                                        <td style={{ color: '#cdd9d9', backgroundColor: 'transparent' }}>{puesto.id}</td>
-                                        <td style={{ color: '#cdd9d9', backgroundColor: 'transparent' }}>{puesto.descripcion}</td>
-                                        <td style={{ color: '#cdd9d9', backgroundColor: 'transparent' }}>${puesto.salario}</td>
-                                        <td style={{ color: '#cdd9d9', backgroundColor: 'transparent' }}>{puesto.esPublico === 1 ? 'Público' : 'Privado'}</td>
-                                        <td style={{ color: '#cdd9d9', backgroundColor: 'transparent' }}>{puesto.activo === 1 ? 'Sí' : 'No'}</td>
-                                        <td className="text-center" style={{ backgroundColor: 'transparent' }}>
-                                            <button
-                                                onClick={() => navigate(`/empresa/buscar-candidatos/${puesto.id}`)}
-                                                className="btn btn-sm me-2"
-                                                style={{ backgroundColor: '#1c6e5a', color: 'white' }}>
-                                                Buscar candidatos
-                                            </button>
-                                            <button
-                                                onClick={() => desactivar(puesto.id)}
-                                                disabled={puesto.activo === 0}
-                                                className="btn btn-sm"
-                                                style={{ backgroundColor: puesto.activo === 0 ? '#444' : '#7a2f2f', color: 'white' }}>
-                                                Desactivar
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                                {puestos.length === 0 && (
-                                    <tr>
-                                        <td colSpan={6} style={{ color: '#8aa8a8', textAlign: 'center', padding: '2rem', backgroundColor: 'transparent' }}>
-                                            No tenés puestos publicados aún.
-                                        </td>
-                                    </tr>
-                                )}
+                            {puestos.map(puesto => (
+                                <tr key={puesto.id} style={{ borderBottom: '1px solid #2e3e3e' }}>
+                                    <td style={{ color: '#cdd9d9', backgroundColor: 'transparent' }}>{puesto.id}</td>
+                                    <td style={{ color: '#cdd9d9', backgroundColor: 'transparent' }}>{puesto.descripcion}</td>
+                                    <td style={{ color: '#cdd9d9', backgroundColor: 'transparent' }}>${puesto.salario}</td>
+                                    <td style={{ color: '#cdd9d9', backgroundColor: 'transparent' }}>{puesto.esPublico === 1 ? 'Público' : 'Privado'}</td>
+                                    <td style={{ color: '#cdd9d9', backgroundColor: 'transparent' }}>{puesto.activo === 1 ? 'Sí' : 'No'}</td>
+                                    <td className="text-center" style={{ backgroundColor: 'transparent' }}>
+                                        <button
+                                            onClick={() => navigate(`/empresa/buscar-candidatos/${puesto.id}`)}
+                                            className="btn btn-sm me-2"
+                                            style={{ backgroundColor: '#1c6e5a', color: 'white' }}>
+                                            Buscar candidatos
+                                        </button>
+                                        <button
+                                            onClick={() => togglePuesto(puesto.id, puesto.activo)}
+                                            className="btn btn-sm"
+                                            style={{
+                                                backgroundColor: puesto.activo === 1 ? '#7a2f2f' : '#1c6e5a',
+                                                color: 'white'
+                                            }}>
+                                            {puesto.activo === 1 ? 'Desactivar' : 'Activar'}
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                            {puestos.length === 0 && (
+                                <tr>
+                                    <td colSpan={6} style={{ color: '#8aa8a8', textAlign: 'center', padding: '2rem', backgroundColor: 'transparent' }}>
+                                        No tenés puestos publicados aún.
+                                    </td>
+                                </tr>
+                            )}
                             </tbody>
                         </table>
                     </div>
